@@ -9,13 +9,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Problem numbers are required (space-separated string)' });
   }
 
-  const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_USERNAME;
-  const repo = process.env.GITHUB_REPO;
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  const owner = process.env.GITHUB_USERNAME || process.env.GH_USERNAME;
+  const repo = process.env.GITHUB_REPO || process.env.GH_REPO;
   const workflowId = 'solve.yml';
 
   if (!token || !owner || !repo) {
-    return res.status(500).json({ error: 'Missing GitHub configuration variables on the server (.env.local)' });
+    return res.status(500).json({ error: 'Missing GitHub configuration variables on the server (GITHUB_TOKEN/GH_TOKEN, GITHUB_USERNAME/GH_USERNAME, GITHUB_REPO/GH_REPO)' });
   }
 
   try {
