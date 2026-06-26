@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd leetcode-frontend && npm run build",
+  "outputDirectory": "leetcode-frontend/.next",
+  "framework": "nextjs"
+}
