@@ -81,13 +81,13 @@ export default function Home() {
       <main className={styles.main}>
         <div className={styles.glassCard}>
           <div className={styles.header}>
-            <div className={styles.botBadge}>SYSTEM ONLINE</div>
+            <div className={styles.botBadge}>
+              <span className={styles.statusDot}></span>
+              <span>System Online</span>
+            </div>
             <h1 className={styles.title}>
               LeetCode <span className={styles.gradientText}>Solver Bot</span>
             </h1>
-            <p className={styles.subtitle}>
-              Specify target LeetCode problems to fetch, solve with Groq Llama-3.3, test, and automatically push solutions to GitHub.
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className={styles.form}>
