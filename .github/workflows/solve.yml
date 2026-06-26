@@ -34,7 +34,7 @@ jobs:
         env:
           GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
           GITHUB_TOKEN:        ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_USERNAME:     ${{ secrets.GH_USERNAME }}
-          GITHUB_REPO:         ${{ secrets.GH_REPO }}
+          GITHUB_USERNAME:     ${{ github.repository_owner }}
+          GITHUB_REPO:         ${{ github.event.repository.name }}
           LEETCODE_SESSION:    ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
