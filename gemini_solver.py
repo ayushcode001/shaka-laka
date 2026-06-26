@@ -15,8 +15,12 @@ Tags: {tags}
 Description:
 {content}
 
+Code Template:
+Use the following starting template code exactly (keep the exact class name and function signature):
+{code_template}
+
 Requirements:
-- Write a complete Python solution inside a class Solution
+- Complete the starting template code with the optimal implementation
 - Add a comment block at the top with:
   # Approach: (brief explanation)
   # Time Complexity: O(?)
@@ -37,7 +41,10 @@ Error / failed test case:
 Your previous (wrong) solution:
 {previous_code}
 
-Fix the solution. Think carefully about the edge case that failed.
+Code Template to follow:
+{code_template}
+
+Fix the solution. Think carefully about the edge case that failed and make sure you adhere to the expected class name and method signatures in the Code Template.
 Return ONLY the corrected Python code. No markdown, no backticks.
 """
 
@@ -48,13 +55,15 @@ def clean_html(html: str) -> str:
     return "\n".join(lines)
 
 def solve_problem(problem: dict, previous_result: dict = None, previous_code: str = None) -> str:
+    code_template = problem.get("codeSnippet") or "class Solution:\n    pass"
     if previous_result and previous_result.get("status") != "Accepted" and previous_code:
         prompt = RETRY_PROMPT.format(
             id=problem.get("questionId", "?"),
             title=problem["title"],
             status=previous_result.get("status", "Wrong Answer"),
             error=previous_result.get("error") or previous_result.get("last_testcase") or "Unknown error",
-            previous_code=previous_code
+            previous_code=previous_code,
+            code_template=code_template
         )
     else:
         tags = ", ".join(t["name"] for t in problem.get("topicTags", []))
@@ -63,7 +72,8 @@ def solve_problem(problem: dict, previous_result: dict = None, previous_code: st
             title=problem["title"],
             difficulty=problem["difficulty"],
             tags=tags or "N/A",
-            content=clean_html(problem.get("content", ""))
+            content=clean_html(problem.get("content", "")),
+            code_template=code_template
         )
 
     response = client.chat.completions.create(

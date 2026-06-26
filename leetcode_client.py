@@ -13,6 +13,11 @@ def fetch_problem(problem_number: int) -> dict:
         difficulty
         exampleTestcases
         topicTags { name }
+        codeSnippets {
+          lang
+          langSlug
+          code
+        }
       }
     }
     """
@@ -24,7 +29,11 @@ def fetch_problem(problem_number: int) -> dict:
         "variables": {"titleSlug": slug}
     }, headers={"Content-Type": "application/json"})
     
-    return resp.json()["data"]["question"]
+    data = resp.json()["data"]["question"]
+    snippets = data.get("codeSnippets") or []
+    python_snippet = next((s["code"] for s in snippets if s["langSlug"] == "python3"), None)
+    data["codeSnippet"] = python_snippet
+    return data
 
 def get_slug_by_number(number: int) -> str:
     query = """

@@ -3,7 +3,7 @@ from gemini_solver import solve_problem
 from github_client import push_solution
 from leetcode_submitter import submit_solution
 
-MAX_RETRIES = 3  # ask Gemini to fix if wrong answer
+MAX_RETRIES = 10  # ask Gemini to fix if wrong answer
 
 def run(problem_numbers: list[int]):
     for num in problem_numbers:
