@@ -7,11 +7,48 @@ export default function Home() {
   const [problems, setProblems] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null); // { type: 'success' | 'error', message: string }
+  const [workflowStatus, setWorkflowStatus] = useState(null); // { status: string, conclusion: string, url: string }
+
+  const pollWorkflowStatus = async (runId) => {
+    try {
+      const res = await fetch(`/api/status?runId=${runId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWorkflowStatus({
+          status: data.status,
+          conclusion: data.conclusion,
+          url: data.html_url
+        });
+
+        if (data.status === "completed") {
+          setLoading(false);
+          if (data.conclusion === "success") {
+            setStatus({
+              type: "success",
+              message: "Bot finished solving and solutions were pushed to GitHub!"
+            });
+          } else {
+            setStatus({
+              type: "error",
+              message: "Workflow failed on GitHub. Please check the run logs."
+            });
+          }
+          return;
+        }
+      }
+    } catch (err) {
+      console.error("Error polling workflow status:", err);
+    }
+
+    // Poll again after 4 seconds
+    setTimeout(() => pollWorkflowStatus(runId), 4000);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setStatus(null);
+    setWorkflowStatus(null);
 
     // Basic Validation
     if (!problems.trim()) {
@@ -34,7 +71,7 @@ export default function Home() {
     }
 
     try {
-      const res = await fetch("/pages/api/trigger" ? "/api/trigger" : "/api/trigger", {
+      const res = await fetch("/api/trigger", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,17 +86,23 @@ export default function Home() {
       if (res.ok) {
         setStatus({
           type: "success",
-          message: data.message || "LeetCode Solver Workflow triggered successfully! Monitor the actions tab on GitHub.",
+          message: data.message || "LeetCode Solver Workflow triggered successfully! Tracking status...",
         });
+        if (data.runId) {
+          setWorkflowStatus({ status: "queued", conclusion: null, url: null });
+          pollWorkflowStatus(data.runId);
+        } else {
+          setLoading(false);
+        }
       } else {
         setStatus({
           type: "error",
           message: data.error || "Failed to trigger the workflow. Please check your credentials.",
         });
+        setLoading(false);
       }
     } catch (err) {
       setStatus({ type: "error", message: err.message || "An unexpected error occurred." });
-    } finally {
       setLoading(false);
     }
   };
@@ -131,6 +174,34 @@ export default function Home() {
                   {status.type === "success" ? "✓" : "⚠"}
                 </span>
                 <p className={styles.statusMessage}>{status.message}</p>
+              </div>
+            )}
+
+            {workflowStatus && (
+              <div className={
+                workflowStatus.status === "completed"
+                  ? (workflowStatus.conclusion === "success" ? styles.successBox : styles.errorBox)
+                  : styles.infoBox
+              }>
+                <span className={styles.statusIcon}>
+                  {workflowStatus.status === "completed"
+                    ? (workflowStatus.conclusion === "success" ? "✓" : "⚠")
+                    : "●"}
+                </span>
+                <div className={styles.statusDetails}>
+                  <p className={styles.statusMessage}>
+                    {workflowStatus.status === "completed"
+                      ? (workflowStatus.conclusion === "success"
+                          ? "Workflow completed successfully! All solved problems have been pushed to GitHub."
+                          : "Workflow failed on GitHub. Please check the logs.")
+                      : `GitHub Workflow: ${workflowStatus.status}...`}
+                  </p>
+                  {workflowStatus.url && (
+                    <a href={workflowStatus.url} target="_blank" rel="noreferrer" className={styles.statusLink}>
+                      View Run on GitHub Actions →
+                    </a>
+                  )}
+                </div>
               </div>
             )}
 

@@ -71,8 +71,26 @@ def parse_result(data: dict) -> dict:
     }
 
     if status != "Accepted":
-        result["error"] = data.get("full_compile_error") \
-                       or data.get("full_runtime_error") \
-                       or data.get("last_testcase")
+        error_details = []
+        if data.get("full_compile_error"):
+            error_details.append(f"Compile Error:\n{data.get('full_compile_error')}")
+        if data.get("full_runtime_error"):
+            error_details.append(f"Runtime Error:\n{data.get('full_runtime_error')}")
+        if status == "Wrong Answer":
+            error_details.append("Wrong Answer:")
+            if data.get("last_testcase"):
+                error_details.append(f"  Input: {data.get('last_testcase')}")
+            if data.get("code_output"):
+                error_details.append(f"  Output: {data.get('code_output')}")
+            if data.get("expected_output"):
+                error_details.append(f"  Expected: {data.get('expected_output')}")
+        
+        # Fallback to general fields if nothing else matched
+        if not error_details:
+            error_details.append(f"Status: {status}")
+            if data.get("last_testcase"):
+                error_details.append(f"Last testcase: {data.get('last_testcase')}")
+                
+        result["error"] = "\n".join(error_details)
 
     return result
