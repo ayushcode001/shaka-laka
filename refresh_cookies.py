@@ -41,7 +41,8 @@ def refresh_cookies():
         page.fill('input[name="password"]', LEETCODE_PASSWORD)
         time.sleep(1)
 
-        page.click('button[type="submit"]')
+        print("Please solve the Cloudflare Turnstile captcha in the browser window if prompted...")
+        page.click('button[type="submit"]', timeout=60000)
 
         # Wait for redirect to home
         try:

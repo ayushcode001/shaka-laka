@@ -35,6 +35,39 @@ def fetch_problem(problem_number: int) -> dict:
     data["codeSnippet"] = python_snippet
     return data
 
+def fetch_daily_problem() -> dict:
+    query = """
+    query questionOfToday {
+      activeDailyCodingChallengeQuestion {
+        date
+        link
+        question {
+          questionId
+          questionFrontendId
+          title
+          titleSlug
+          difficulty
+          content
+          topicTags { name }
+          codeSnippets {
+            lang
+            langSlug
+            code
+          }
+        }
+      }
+    }
+    """
+    resp = requests.post(LEETCODE_GQL, json={
+        "query": query
+    }, headers={"Content-Type": "application/json"})
+    
+    data = resp.json()["data"]["activeDailyCodingChallengeQuestion"]["question"]
+    snippets = data.get("codeSnippets") or []
+    python_snippet = next((s["code"] for s in snippets if s["langSlug"] == "python3"), None)
+    data["codeSnippet"] = python_snippet
+    return data
+
 def get_slug_by_number(number: int) -> str:
     query = """
     query problemsetQuestionList($skip: Int!) {

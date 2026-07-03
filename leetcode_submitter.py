@@ -19,19 +19,48 @@ def get_session() -> requests.Session:
 def submit_solution(title_slug: str, question_id: str, code: str) -> dict:
     session = get_session()
 
-    # Step 1: Submit
-    url = f"{BASE}/problems/{title_slug}/submit/"
-    payload = {
-        "lang": "python3",
-        "question_id": question_id,
-        "typed_code": code,
-    }
-    resp = session.post(url, json=payload)
-    resp.raise_for_status()
-    submission_id = resp.json().get("submission_id")
+    def attempt_submit():
+        # Warm up session by visiting the problem page
+        problem_url = f"{BASE}/problems/{title_slug}/"
+        session.get(problem_url)
+        
+        # Get fresh csrf token from response cookies
+        new_csrf = session.cookies.get("csrftoken")
+        if new_csrf:
+            session.headers.update({"x-csrftoken": new_csrf})
+            
+        # Add 2-second delay to avoid rate limiting
+        time.sleep(2.0)
+
+        # Submit
+        url = f"{BASE}/problems/{title_slug}/submit/"
+        payload = {
+            "lang": "python3",
+            "question_id": question_id,
+            "typed_code": code,
+        }
+        
+        post_headers = {
+            "Referer": problem_url,
+            "Origin": BASE
+        }
+        
+        resp = session.post(url, json=payload, headers=post_headers)
+        resp.raise_for_status()
+        return resp.json().get("submission_id")
+
+    try:
+        submission_id = attempt_submit()
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None and e.response.status_code == 403:
+            print("   403 Forbidden: Session/Token expired or missing. Retrying in 5 seconds...")
+            time.sleep(5.0)
+            submission_id = attempt_submit()
+        else:
+            raise
 
     if not submission_id:
-        raise ValueError(f"No submission_id returned: {resp.text}")
+        raise ValueError("No submission_id returned")
 
     print(f"   Submitted! ID: {submission_id}. Waiting for result...")
 

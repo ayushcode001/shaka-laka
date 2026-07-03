@@ -1,163 +1,151 @@
-# ⚡ Shaka Laka: Autonomous LeetCode Solver Bot & Dashboard
+# Shaka Laka
 
-An advanced, end-to-end autonomous agent system that fetches LeetCode problems, solves them using **Llama-3.3-70b-versatile** via the **Groq API**, submits and validates solutions directly on LeetCode with real-time error-feedback retries, logs complexity, and automatically pushes clean solution files to a GitHub repository.
+An autonomous agent system that fetches LeetCode problems, solves them using Groq API, submits to LeetCode, handles retries on failures, and commits the solutions to a GitHub repository.
 
-It features a sleek, responsive Next.js Web Dashboard fully integrated with Vercel and GitHub Actions to trigger solve sequences on-demand.
+## Features
+- **Auto-Solve by Problem Number**: Trigger solving sequences for one or more specific LeetCode problem IDs from CLI or UI.
+- **Daily Challenge Streak**: Automated mode to fetch and solve LeetCode's active Daily Challenge problem to maintain your streak.
+- **Retry Loop**: Retries up to 5 times on compiler, runtime, or incorrect answer verdicts, using detailed feedback to refine the solution.
+- **Pushes to GitHub**: Automatically commits accepted solutions under the `solutions/` folder with rich headers containing metadata like runtime and memory beats percentages.
+- **Web Dashboard**: Modern glassmorphic web frontend to monitor system status and trigger dispatches on-demand.
 
----
+## Tech Stack
+- **Languages**: Python 3.11, JavaScript (ES6)
+- **AI Core**: Groq SDK (`llama-3.3-70b-versatile` model)
+- **API integration**: LeetCode GraphQL & Submission REST API, GitHub REST API
+- **Automation**: Playwright (for automated cookie refreshing)
+- **CI/CD & Hosting**: GitHub Actions (runners), Vercel (frontend deployment)
+- **Frameworks**: Next.js 16, React 19
 
-## 🏗️ Architecture & Workflow
-
-The system uses a loop to verify and refine solutions using real-time compiler and testcase feedback from LeetCode.
-
-```mermaid
-graph TD
-    A[Vercel Web Dashboard] -- POST /api/trigger --> B[GitHub Action workflow_dispatch]
-    B -- Run bot --> C[main.py]
-    C -- Fetch metadata --> D[leetcode_client.py]
-    D -- GraphQL query --> E((LeetCode GQL API))
-    C -- Request Solution --> F[gemini_solver.py]
-    F -- Generate Solution --> G((Groq Llama-3.3))
-    G -- Return Code --> C
-    C -- Submit Code --> H[leetcode_submitter.py]
-    H -- API Submit & Poll --> I((LeetCode Judge))
-    I -- Rejected: Error Feedback --> F
-    I -- Accepted --> J[github_client.py]
-    J -- Commit Solution --> K((GitHub Repo))
-```
-
----
-
-## ✨ Features
-
-- **🧠 LLM-Powered Solver:** Leverages the state-of-the-art `llama-3.3-70b-versatile` model to write clean, optimal, and documented solutions in Python.
-- **🔄 Smart Feedback-Loop Retries:** If a submission fails (e.g. *Wrong Answer*, *Time Limit Exceeded*, *Runtime Error*), the bot retrieves the failed testcase/error details, feeds it back to the LLM, and refines the code (up to 3 attempts).
-- **🖥️ Sleek Next.js Dashboard:** A modern, glassmorphic UI built with React & Next.js to trigger solve requests by specifying space-separated problem numbers. Fully deployed on Vercel.
-- **📂 Git Auto-Sync:** Saves solved problems inside `/solutions` with auto-padded IDs, slug names, and a rich metadata header containing difficulty, runtime, memory usage, and beats percentages.
-- **🍪 Playwright Cookie Refresher:** Includes an automated script using Playwright to handle LeetCode login and capture session tokens to bypass API authentication expirations.
-
----
-
-## 📂 Project Structure
-
+## Project Structure
 ```text
-├── .github/workflows/
-│   └── solve.yml             # GitHub Action triggered by the dashboard
-├── leetcode-frontend/        # Next.js web application
-│   ├── pages/
-│   │   ├── api/
-│   │   │   └── trigger.js    # API route to trigger GitHub Action dispatches
-│   │   └── index.js          # Sleek landing dashboard
-│   ├── styles/               # CSS modules & styling
-│   └── public/               # Static assets
-├── solutions/                # Auto-populated folder for successful solutions
-├── config.py                 # Configuration loader (dotenv wrapper)
-├── gemini_solver.py          # Groq Llama-3.3 client and code generation
-├── github_client.py          # GitHub API integration for file commits
-├── leetcode_client.py        # LeetCode GQL wrapper to retrieve problem info
-├── leetcode_submitter.py     # LeetCode API client for submission and polling
-├── main.py                   # System entrypoint and loop logic
-├── refresh_cookies.py        # Playwright utility to refresh cookies
-└── requirements.txt          # Python dependencies
+.
+├── .github
+│   └── workflows
+│       ├── daily.yml
+│       └── solve.yml
+├── .gitignore
+├── README.md
+├── config.py
+├── github_client.py
+├── groq_solver.py
+├── leetcode-frontend
+│   ├── .gitignore
+│   ├── README.md
+│   ├── eslint.config.mjs
+│   ├── jsconfig.json
+│   ├── next.config.mjs
+│   ├── package.json
+│   ├── pages
+│   │   ├── _app.js
+│   │   ├── _document.js
+│   │   ├── api
+│   │   │   ├── daily.js
+│   │   │   └── status.js
+│   │   └── index.js
+│   └── styles
+│       ├── Home.module.css
+│       └── globals.css
+├── leetcode_client.py
+├── leetcode_submitter.py
+├── main.py
+├── refresh_cookies.py
+├── requirements.txt
+├── solutions
+│   ├── 0001_two_sum.py
+│   ├── 0239_sliding_window_maximum.py
+│   └── 0860_design_circular_queue.py
+└── vercel.json
 ```
 
----
-
-## 🚀 Setup & Installation
-
-### Prerequisites
-- Python 3.11+
-- Node.js 18+ & npm
-- A Groq API Key
-- A GitHub Personal Access Token (PAT) with `repo` and `workflow` scopes
-- A LeetCode account
-
-### Local Setup
+## Setup
 1. **Clone the Repository:**
    ```bash
    git clone https://github.com/ayushcode001/shaka-laka.git
    cd shaka-laka
    ```
-
-2. **Python Environment Setup:**
+2. **Create virtual environment:**
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
-   pip install -r requirements.txt
    ```
+3. **Activate environment & Install dependencies:**
+   - On Windows:
+     ```powershell
+     .\venv\Scripts\activate
+     pip install -r requirements.txt
+     ```
+   - On macOS/Linux:
+     ```bash
+     source venv/bin/activate
+     pip install -r requirements.txt
+     ```
+4. **Fill Environment variables:**
+   Create a `.env` file in the root directory (see **Environment Variables** below).
+5. **Run Locally:**
+   - To solve specific problems:
+     ```bash
+     python main.py 1 42
+     ```
+   - To solve the daily challenge:
+     ```bash
+     python main.py --daily
+     ```
 
-3. **Configure Environment Variables (`.env`):**
-   Create a `.env` file in the root folder:
-   ```env
-   GROQ_API_KEY=your_groq_api_key
-   GITHUB_TOKEN=your_github_pat
-   GITHUB_USERNAME=your_github_username
-   GITHUB_REPO=shaka-laka
+## Environment Variables
+Create a `.env` file in the root of the project with the following configuration:
 
-   LEETCODE_EMAIL=your_leetcode_email
-   LEETCODE_PASSWORD=your_leetcode_password
-   LEETCODE_SESSION=will_be_auto_filled_or_copied
-   LEETCODE_CSRF_TOKEN=will_be_auto_filled_or_copied
-   ```
+| Variable | Description |
+| :--- | :--- |
+| `GROQ_API_KEY` | API Key for accessing Llama models on Groq. |
+| `GITHUB_TOKEN` | Personal Access Token (PAT) with `repo` and `workflow` permissions. |
+| `GITHUB_USERNAME` | Your GitHub account username. |
+| `GITHUB_REPO` | Target repository name (`shaka-laka`). |
+| `LEETCODE_EMAIL` | Email used to sign in to LeetCode (only for cookie refresh). |
+| `LEETCODE_PASSWORD` | Password for LeetCode login (only for cookie refresh). |
+| `LEETCODE_SESSION` | Session cookie value extracted from LeetCode. |
+| `LEETCODE_CSRF_TOKEN`| CSRF token extracted from LeetCode. |
 
-4. **Initialize LeetCode Session Cookies:**
-   Run the Playwright cookie refresher to log in and extract cookies automatically:
-   ```bash
-   pip install playwright
-   playwright install chromium
-   python refresh_cookies.py
-   ```
-   Choose `y` when asked to automatically write variables to `.env`.
+> Note: To automate fetching session cookies, run `python refresh_cookies.py`.
 
-5. **Run the Solver CLI (Optional):**
-   To solve problems 1, 14, and 206 directly from your machine:
-   ```bash
-   python main.py 1 14 206
-   ```
+## Usage
+- Run solver for specific problems:
+  ```bash
+  python main.py <problem_number1> <problem_number2> ...
+  ```
+- Run solver for daily challenge:
+  ```bash
+  python main.py --daily
+  ```
 
----
+## Frontend
+The dashboard UI allows triggering the solver bot workflows remotely.
 
-## 🖥️ Web Dashboard (Next.js)
-
-The dashboard allows you to trigger the solver bot on GitHub Actions without using a local terminal.
-
-### Run Dashboard Locally
+### Run Locally:
 ```bash
 cd leetcode-frontend
 npm install
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to view the UI.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Production Deployment
-The dashboard is optimized for **Vercel** and integrates with GitHub Actions using the following Vercel Environment Variables:
+### Deploy to Vercel:
+The project is configured for easy deployment on Vercel using the root `vercel.json` settings. Add the following Environment Variables on Vercel to allow workflow triggers:
 - `GITHUB_TOKEN`
 - `GITHUB_USERNAME`
 - `GITHUB_REPO`
 
-These are automatically utilized by `/api/trigger` to authorize dispatches to GitHub's REST API.
+## GitHub Actions
+Workflows run inside GitHub Actions and use repository secrets for solver execution.
 
----
+### Workflows:
+- **`solve.yml`**: Dispatched manually or via frontend to solve specified space-separated problem IDs.
+- **`daily.yml`**: Scheduled via cron to run automatically every day at 00:30 UTC. Can also be triggered manually.
 
-## ⚙️ GitHub Secrets Configuration
-
-To run the solver successfully inside GitHub Actions, navigate to your repository **Settings > Secrets and variables > Actions** and add the following repository secrets:
-
-| Secret Name | Description |
-| :--- | :--- |
-| `GROQ_API_KEY` | Your Groq API key |
-| `GITHUB_TOKEN` | GitHub PAT with repo & workflow permissions |
-| `GITHUB_USERNAME` | Your GitHub Username |
-| `GITHUB_REPO` | Your Repository Name (`shaka-laka`) |
-| `LEETCODE_SESSION` | From `.env` (needs updating every 2-3 weeks) |
-| `LEETCODE_CSRF_TOKEN` | From `.env` (needs updating every 2-3 weeks) |
-
----
-
-## 🛠️ Built With
-
-- **AI Model:** [Llama 3.3 70B (Groq)](https://groq.com)
-- **Frontend Framework:** [Next.js](https://nextjs.org/)
-- **Automation Framework:** [Playwright](https://playwright.dev/)
-- **CI/CD:** [GitHub Actions](https://github.com/features/actions)
-- **Hosting:** [Vercel](https://vercel.com/)
+### Required Secrets:
+Go to **Settings > Secrets and variables > Actions** and add:
+- `GROQ_API_KEY`
+- `LEETCODE_SESSION`
+- `LEETCODE_CSRF_TOKEN`
+- `GITHUB_TOKEN`
+- `GITHUB_USERNAME`
+- `GITHUB_REPO`
