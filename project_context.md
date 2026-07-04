@@ -49,6 +49,9 @@
 ├── requirements.txt
 ├── solutions
 │   ├── 0001_two_sum.py
+│   ├── 0023_merge_k_sorted_lists.py
+│   ├── 0075_sort_colors.py
+│   ├── 0232_implement_queue_using_stacks.py
 │   ├── 0239_sliding_window_maximum.py
 │   └── 0860_design_circular_queue.py
 └── vercel.json
@@ -700,6 +703,8 @@ from groq_solver import solve_problem
 from github_client import push_solution
 from leetcode_submitter import submit_solution
 
+import sys
+
 MAX_RETRIES = 5  # ask Groq to fix if wrong answer
 
 def run_problem(problem: dict):
@@ -707,6 +712,7 @@ def run_problem(problem: dict):
 
     solution = None
     result = None
+    success = False
 
     for attempt in range(1, MAX_RETRIES + 1):
         print(f"\n🤖 Solving (attempt {attempt})...")
@@ -724,6 +730,7 @@ def run_problem(problem: dict):
         if status == "Accepted":
             print(f"   Runtime : {result['runtime']} (beats {result['runtime_percentile']:.1f}%)")
             print(f"   Memory  : {result['memory']} (beats {result['memory_percentile']:.1f}%)")
+            success = True
             break
         else:
             print(f"   Error: {result.get('error', 'Unknown error')}")
@@ -734,7 +741,15 @@ def run_problem(problem: dict):
     print(f"\n📤 Pushing to GitHub...")
     push_solution(problem, solution, result)
 
+    if not success:
+        raise ValueError(f"Failed to solve problem: LeetCode status was {result.get('status', 'Unknown')}")
+
 def run(args: list[str]):
+    if not args:
+        print("No arguments provided. Usage: python main.py <problem_id> or python main.py --daily")
+        sys.exit(1)
+
+    has_errors = False
     if "--daily" in args:
         print("\n" + "="*50)
         print("📋 LeetCode Daily Challenge")
@@ -742,14 +757,15 @@ def run(args: list[str]):
             problem = fetch_daily_problem()
             run_problem(problem)
         except Exception as e:
-            print(f"Error fetching daily problem: {e}")
-            raise
+            print(f"Error fetching/solving daily problem: {e}")
+            has_errors = True
     else:
         for arg in args:
             try:
                 num = int(arg)
             except ValueError:
                 print(f"Invalid problem number: {arg}")
+                has_errors = True
                 continue
             print("\n" + "="*50)
             print(f"📋 Problem #{num}")
@@ -758,10 +774,13 @@ def run(args: list[str]):
                 run_problem(problem)
             except Exception as e:
                 print(f"Error processing problem #{num}: {e}")
+                has_errors = True
                 continue
 
+    if has_errors:
+        sys.exit(1)
+
 if __name__ == "__main__":
-    import sys
     run(sys.argv[1:])
 ```
 
@@ -1717,6 +1736,57 @@ class Solution:
                 return [num_to_index[complement], i]
             num_to_index[num] = i
         return []
+```
+
+### /solutions/0023_merge_k_sorted_lists.py
+Accepted Python 3 solution for LeetCode Problem #23: Merge k Sorted Lists.
+
+```python
+# 23. Merge k Sorted Lists
+# Difficulty  : Hard
+# Tags        : Linked List, Divide and Conquer, Heap (Priority Queue), Merge Sort
+# LeetCode    : https://leetcode.com/problems/merge-k-sorted-lists/
+# Status      : Accepted
+# Runtime     : 11 ms (beats 54.9%)
+# Memory      : 22.9 MB (beats 45.9%)
+# Solved on   : 2026-07-04
+# ─────────────────────────────────────────────────────────────
+
+# Approach: We will use a min-heap to store the current smallest node from each linked list. This approach ensures that we always select the smallest node to add to our result list, thus maintaining the sorted order.
+# Time Complexity: O(N log k), where N is the total number of nodes across all linked lists and k is the number of linked lists. This is because we perform a heap operation for each node.
+# Space Complexity: O(k), as we need to store k nodes in the heap at any given time.
+
+class Solution:
+    def mergeKLists(self, lists: List[Optional[ListNode]]) -> Optional[ListNode]:
+        # Create a min-heap to store the current smallest node from each linked list
+        min_heap = []
+        
+        # Add the head of each linked list to the min-heap
+        for i, node in enumerate(lists):
+            if node:
+                # Store a tuple containing the node's value, the list index, and the node itself
+                # This allows us to break ties based on the list index
+                heapq.heappush(min_heap, (node.val, i, node))
+        
+        # Create a dummy node to serve as the head of our result list
+        dummy = ListNode()
+        current = dummy
+        
+        # Continue until the min-heap is empty
+        while min_heap:
+            # Extract the smallest node from the min-heap
+            val, list_index, node = heapq.heappop(min_heap)
+            
+            # Add the extracted node to our result list
+            current.next = node
+            current = current.next
+            
+            # If the extracted node has a next node, add it to the min-heap
+            if node.next:
+                heapq.heappush(min_heap, (node.next.val, list_index, node.next))
+        
+        # Return the next node of the dummy node, which is the head of our result list
+        return dummy.next
 ```
 
 ### /solutions/0239_sliding_window_maximum.py
